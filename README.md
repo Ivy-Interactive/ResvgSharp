@@ -1,1 +1,1 @@
-**ResvgSharp** is a cross-platform .NET wrapper for the high-performance [resvg](https://github.com/RazrFalcon/resvg) SVG rendering library written in Rust. It enables rendering SVG strings to PNG images with full support for custom fonts provided as in-memory `byte[]`.
+**ResvgSharp** is a cross-platform .NET wrapper for the high-performance [resvg](https://github.com/linebender/resvg) SVG rendering library written in Rust. It enables rendering SVG strings to PNG images with full support for custom fonts provided as in-memory `byte[]`.
