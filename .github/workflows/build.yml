@@ -99,19 +99,22 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         pattern: native-*
-        path: build/runtimes/
-        merge-multiple: true
+        path: build/temp/
 
     - name: Fix artifact structure
       run: |
-        for dir in build/runtimes/*/; do
-          if [ -d "${dir}native" ]; then
-            rid=$(basename "$dir")
+        mkdir -p build/runtimes
+        for artifact_dir in build/temp/native-*/; do
+          if [ -d "$artifact_dir" ]; then
+            # Extract RID from artifact name (e.g., native-linux-x64 -> linux-x64)
+            rid=$(basename "$artifact_dir" | sed 's/^native-//')
             mkdir -p "build/runtimes/${rid}/native"
-            mv "${dir}native"/* "build/runtimes/${rid}/native/" || true
-            rmdir "${dir}native" || true
+            # Copy all files from the artifact directory
+            cp -r "$artifact_dir"/* "build/runtimes/${rid}/native/" 2>/dev/null || true
           fi
         done
+        # Clean up temp directory
+        rm -rf build/temp
 
     - name: Restore dependencies
       run: dotnet restore
@@ -122,7 +125,11 @@ jobs:
     - name: Debug artifacts structure
       run: |
         echo "=== Build directory structure ==="
-        find build -type f -name "*.so" -o -name "*.dll" -o -name "*.dylib" 2>/dev/null || echo "No native libraries found in build/"
+        find build -type f -name "*.so" -o -name "*.dll" -o -name "*.dylib" | head -20 || echo "No native libraries found"
+        echo ""
+        echo "=== Build/runtimes directory tree ==="
+        tree build/runtimes/ || ls -laR build/runtimes/
+        echo ""
         echo "=== Test output directory before copy ==="
         ls -la tests/ResvgSharp.Tests/bin/Release/net9.0/ 2>/dev/null || echo "Test output directory doesn't exist yet"
 
