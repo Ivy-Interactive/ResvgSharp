@@ -119,6 +119,14 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    - name: Copy native libraries for testing
+      run: |
+        # Copy Linux x64 native library to test output directory for current platform
+        mkdir -p tests/ResvgSharp.Tests/bin/Release/net9.0/
+        if [ -f "build/runtimes/linux-x64/native/libresvg_wrapper.so" ]; then
+          cp build/runtimes/linux-x64/native/libresvg_wrapper.so tests/ResvgSharp.Tests/bin/Release/net9.0/
+        fi
+
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal
 
