@@ -119,13 +119,37 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    - name: Debug artifacts structure
+      run: |
+        echo "=== Build directory structure ==="
+        find build -type f -name "*.so" -o -name "*.dll" -o -name "*.dylib" 2>/dev/null || echo "No native libraries found in build/"
+        echo "=== Test output directory before copy ==="
+        ls -la tests/ResvgSharp.Tests/bin/Release/net9.0/ 2>/dev/null || echo "Test output directory doesn't exist yet"
+
     - name: Copy native libraries for testing
       run: |
-        # Copy Linux x64 native library to test output directory for current platform
+        # Ensure test output directory exists
         mkdir -p tests/ResvgSharp.Tests/bin/Release/net9.0/
+        
+        # Copy Linux x64 native library to test output directory
         if [ -f "build/runtimes/linux-x64/native/libresvg_wrapper.so" ]; then
+          echo "Copying libresvg_wrapper.so to test directory"
           cp build/runtimes/linux-x64/native/libresvg_wrapper.so tests/ResvgSharp.Tests/bin/Release/net9.0/
+          # Also copy with alternative name that .NET might look for
+          cp build/runtimes/linux-x64/native/libresvg_wrapper.so tests/ResvgSharp.Tests/bin/Release/net9.0/resvg_wrapper.so
+        else
+          echo "ERROR: libresvg_wrapper.so not found at expected location"
+          exit 1
         fi
+        
+        # Verify the copy worked
+        echo "=== Test output directory after copy ==="
+        ls -la tests/ResvgSharp.Tests/bin/Release/net9.0/
+        
+        # Check if the library can be read
+        echo "=== Library file info ==="
+        file tests/ResvgSharp.Tests/bin/Release/net9.0/libresvg_wrapper.so
+        ldd tests/ResvgSharp.Tests/bin/Release/net9.0/libresvg_wrapper.so || echo "ldd failed - checking dependencies..."
 
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal
