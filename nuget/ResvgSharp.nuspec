@@ -2,15 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>ResvgSharp</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <title>ResvgSharp</title>
-    <authors>ResvgSharp Contributors</authors>
+    <authors>Ivy Interactive</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/Ivy-Interactive/ResvgSharp</projectUrl>
     <description>Cross-platform .NET wrapper for the high-performance resvg SVG rendering library. Render SVG strings to PNG images with full support for custom fonts.</description>
     <readme>README.md</readme>
-    <copyright>Copyright © Ivy Interactive </copyright>
+    <copyright>Copyright © Ivy Interactive</copyright>
     <tags>svg rendering resvg graphics png vector</tags>
     <repository type="git" url="https://github.com/Ivy-Interactive/ResvgSharp.git" />
     <dependencies>
