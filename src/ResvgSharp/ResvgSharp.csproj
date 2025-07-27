@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>ResvgSharp</PackageId>
+    <PackageDescription>Cross-platform .NET wrapper for the high-performance resvg SVG rendering library</PackageDescription>
+    <PackageTags>svg;rendering;resvg;graphics;png;vector</PackageTags>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\build\runtimes\**\*" Pack="true" PackagePath="runtimes\" />
+  </ItemGroup>
+
+</Project>

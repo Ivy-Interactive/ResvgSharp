@@ -1,0 +1,157 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  build-native:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            rust-target: x86_64-pc-windows-msvc
+            artifact: resvg_wrapper.dll
+          - os: ubuntu-latest
+            rid: linux-x64
+            rust-target: x86_64-unknown-linux-gnu
+            artifact: libresvg_wrapper.so
+          - os: ubuntu-latest
+            rid: linux-arm64
+            rust-target: aarch64-unknown-linux-gnu
+            artifact: libresvg_wrapper.so
+            use-cross: true
+          - os: macos-latest
+            rid: osx-x64
+            rust-target: x86_64-apple-darwin
+            artifact: libresvg_wrapper.dylib
+          - os: macos-latest
+            rid: osx-arm64
+            rust-target: aarch64-apple-darwin
+            artifact: libresvg_wrapper.dylib
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.rust-target }}
+
+    - name: Install cross-compilation tools
+      if: matrix.use-cross == true
+      run: |
+        cargo install cross --git https://github.com/cross-rs/cross
+
+    - name: Build native library (cross)
+      if: matrix.use-cross == true
+      working-directory: native/resvg-wrapper
+      run: |
+        cross build --release --target ${{ matrix.rust-target }}
+
+    - name: Build native library
+      if: matrix.use-cross != true
+      working-directory: native/resvg-wrapper
+      run: |
+        cargo build --release --target ${{ matrix.rust-target }}
+
+    - name: Create output directory
+      run: |
+        mkdir -p build/runtimes/${{ matrix.rid }}/native
+
+    - name: Copy native library (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        cp native/resvg-wrapper/target/${{ matrix.rust-target }}/release/${{ matrix.artifact }} build/runtimes/${{ matrix.rid }}/native/
+
+    - name: Copy native library (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        cp native/resvg-wrapper/target/${{ matrix.rust-target }}/release/${{ matrix.artifact }} build/runtimes/${{ matrix.rid }}/native/
+
+    - name: Upload native artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: native-${{ matrix.rid }}
+        path: build/runtimes/${{ matrix.rid }}/native/*
+
+  build-dotnet:
+    needs: build-native
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download all native artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: native-*
+        path: build/runtimes/
+        merge-multiple: true
+
+    - name: Fix artifact structure
+      run: |
+        for dir in build/runtimes/*/; do
+          if [ -d "${dir}native" ]; then
+            rid=$(basename "$dir")
+            mkdir -p "build/runtimes/${rid}/native"
+            mv "${dir}native"/* "build/runtimes/${rid}/native/" || true
+            rmdir "${dir}native" || true
+          fi
+        done
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test --configuration Release --no-build --verbosity normal
+
+    - name: Pack NuGet package
+      run: dotnet pack src/ResvgSharp/ResvgSharp.csproj --configuration Release --no-build --output nupkgs
+
+    - name: Upload NuGet package
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-package
+        path: nupkgs/*.nupkg
+
+  release:
+    needs: build-dotnet
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download NuGet package
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-package
+        path: nupkgs
+
+    - name: Push to NuGet.org
+      run: |
+        dotnet nuget push nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: nupkgs/*.nupkg
+        generate_release_notes: true

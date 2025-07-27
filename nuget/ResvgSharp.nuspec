@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>ResvgSharp</id>
+    <version>1.0.1</version>
+    <title>ResvgSharp</title>
+    <authors>ResvgSharp Contributors</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/Ivy-Interactive/ResvgSharp</projectUrl>
+    <description>Cross-platform .NET wrapper for the high-performance resvg SVG rendering library. Render SVG strings to PNG images with full support for custom fonts.</description>
+    <readme>README.md</readme>
+    <copyright>Copyright © Ivy Interactive </copyright>
+    <tags>svg rendering resvg graphics png vector</tags>
+    <repository type="git" url="https://github.com/Ivy-Interactive/ResvgSharp.git" />
+    <dependencies>
+      <group targetFramework="net9.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <!-- .NET assemblies -->
+    <file src="..\src\ResvgSharp\bin\Release\net9.0\ResvgSharp.dll" target="lib\net9.0\" />
+    <file src="..\src\ResvgSharp\bin\Release\net9.0\ResvgSharp.pdb" target="lib\net9.0\" />
+    
+    <!-- Native libraries -->
+    <file src="..\build\runtimes\win-x64\native\resvg_wrapper.dll" target="runtimes\win-x64\native\" />
+    <file src="..\build\runtimes\linux-x64\native\libresvg_wrapper.so" target="runtimes\linux-x64\native\" />
+    <file src="..\build\runtimes\linux-arm64\native\libresvg_wrapper.so" target="runtimes\linux-arm64\native\" />
+    <file src="..\build\runtimes\osx-x64\native\libresvg_wrapper.dylib" target="runtimes\osx-x64\native\" />
+    <file src="..\build\runtimes\osx-arm64\native\libresvg_wrapper.dylib" target="runtimes\osx-arm64\native\" />
+    
+    <!-- Documentation -->
+    <file src="..\README.md" target="" />
+  </files>
+</package>
