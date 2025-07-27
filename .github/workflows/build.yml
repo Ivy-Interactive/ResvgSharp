@@ -185,9 +185,3 @@ jobs:
     - name: Push to NuGet.org
       run: |
         dotnet nuget push nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: nupkgs/*.nupkg
-        generate_release_notes: true
