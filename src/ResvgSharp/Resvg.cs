@@ -34,7 +34,7 @@ public static class Resvg
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
     private static extern int render_svg_to_png_with_options(
-        [MarshalAs(UnmanagedType.LPUTF8Str)] string svg_data,
+        byte[] svg_data,
         ref RenderOptions options,
         out IntPtr out_buf,
         out UIntPtr out_len
@@ -84,31 +84,41 @@ public static class Resvg
         {
             if (!string.IsNullOrEmpty(options.Background))
             {
-                backgroundPtr = Marshal.StringToCoTaskMemUTF8(options.Background);
+                var backgroundBytes = System.Text.Encoding.UTF8.GetBytes(options.Background + "\0");
+                backgroundPtr = Marshal.AllocHGlobal(backgroundBytes.Length);
+                Marshal.Copy(backgroundBytes, 0, backgroundPtr, backgroundBytes.Length);
                 nativeOptions.background = backgroundPtr;
             }
 
             if (!string.IsNullOrEmpty(options.ExportId))
             {
-                exportIdPtr = Marshal.StringToCoTaskMemUTF8(options.ExportId);
+                var exportIdBytes = System.Text.Encoding.UTF8.GetBytes(options.ExportId + "\0");
+                exportIdPtr = Marshal.AllocHGlobal(exportIdBytes.Length);
+                Marshal.Copy(exportIdBytes, 0, exportIdPtr, exportIdBytes.Length);
                 nativeOptions.export_id = exportIdPtr;
             }
 
             if (!string.IsNullOrEmpty(options.ResourcesDir))
             {
-                resourcesDirPtr = Marshal.StringToCoTaskMemUTF8(options.ResourcesDir);
+                var resourcesDirBytes = System.Text.Encoding.UTF8.GetBytes(options.ResourcesDir + "\0");
+                resourcesDirPtr = Marshal.AllocHGlobal(resourcesDirBytes.Length);
+                Marshal.Copy(resourcesDirBytes, 0, resourcesDirPtr, resourcesDirBytes.Length);
                 nativeOptions.resources_dir = resourcesDirPtr;
             }
 
             if (!string.IsNullOrEmpty(options.UseFontFile))
             {
-                fontFilePtr = Marshal.StringToCoTaskMemUTF8(options.UseFontFile);
+                var fontFileBytes = System.Text.Encoding.UTF8.GetBytes(options.UseFontFile + "\0");
+                fontFilePtr = Marshal.AllocHGlobal(fontFileBytes.Length);
+                Marshal.Copy(fontFileBytes, 0, fontFilePtr, fontFileBytes.Length);
                 nativeOptions.font_file = fontFilePtr;
             }
 
             if (!string.IsNullOrEmpty(options.UseFontDir))
             {
-                fontDirPtr = Marshal.StringToCoTaskMemUTF8(options.UseFontDir);
+                var fontDirBytes = System.Text.Encoding.UTF8.GetBytes(options.UseFontDir + "\0");
+                fontDirPtr = Marshal.AllocHGlobal(fontDirBytes.Length);
+                Marshal.Copy(fontDirBytes, 0, fontDirPtr, fontDirBytes.Length);
                 nativeOptions.font_dir = fontDirPtr;
             }
 
@@ -136,7 +146,14 @@ public static class Resvg
                 fontLensPtr = Marshal.AllocHGlobal(UIntPtr.Size * fontLens.Length);
                 for (int i = 0; i < fontLens.Length; i++)
                 {
-                    Marshal.WriteIntPtr(fontLensPtr, i * UIntPtr.Size, (IntPtr)fontLens[i]);
+                    if (UIntPtr.Size == 4)
+                    {
+                        Marshal.WriteInt32(fontLensPtr, i * 4, (int)fontLens[i].ToUInt32());
+                    }
+                    else
+                    {
+                        Marshal.WriteInt64(fontLensPtr, i * 8, (long)fontLens[i].ToUInt64());
+                    }
                 }
 
                 nativeOptions.fonts = fontArrayPtr;
@@ -147,7 +164,8 @@ public static class Resvg
             IntPtr pngBuffer;
             UIntPtr pngLength;
             
-            int result = render_svg_to_png_with_options(svg, ref nativeOptions, out pngBuffer, out pngLength);
+            var svgBytes = System.Text.Encoding.UTF8.GetBytes(svg + "\0");
+            int result = render_svg_to_png_with_options(svgBytes, ref nativeOptions, out pngBuffer, out pngLength);
 
             if (result != 0)
             {
@@ -174,11 +192,11 @@ public static class Resvg
         }
         finally
         {
-            if (backgroundPtr != IntPtr.Zero) Marshal.FreeCoTaskMem(backgroundPtr);
-            if (exportIdPtr != IntPtr.Zero) Marshal.FreeCoTaskMem(exportIdPtr);
-            if (resourcesDirPtr != IntPtr.Zero) Marshal.FreeCoTaskMem(resourcesDirPtr);
-            if (fontFilePtr != IntPtr.Zero) Marshal.FreeCoTaskMem(fontFilePtr);
-            if (fontDirPtr != IntPtr.Zero) Marshal.FreeCoTaskMem(fontDirPtr);
+            if (backgroundPtr != IntPtr.Zero) Marshal.FreeHGlobal(backgroundPtr);
+            if (exportIdPtr != IntPtr.Zero) Marshal.FreeHGlobal(exportIdPtr);
+            if (resourcesDirPtr != IntPtr.Zero) Marshal.FreeHGlobal(resourcesDirPtr);
+            if (fontFilePtr != IntPtr.Zero) Marshal.FreeHGlobal(fontFilePtr);
+            if (fontDirPtr != IntPtr.Zero) Marshal.FreeHGlobal(fontDirPtr);
 
             foreach (var ptr in fontPtrs)
             {
