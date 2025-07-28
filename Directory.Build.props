@@ -12,5 +12,11 @@
     <RepositoryUrl>https://github.com/Ivy-Interactive/ResvgSharp</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Version>1.0.2</Version>
+    <PackageId>ResvgSharp</PackageId>
+    <Title>ResvgSharp</Title>
+    <PackageDescription>Cross-platform .NET wrapper for the high-performance resvg SVG rendering library. Render SVG strings to PNG images with full support for custom fonts.</PackageDescription>
+    <PackageTags>svg;rendering;resvg;graphics;png;vector</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 </Project>
